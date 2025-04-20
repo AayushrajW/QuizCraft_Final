@@ -254,6 +254,97 @@ def download_quiz(quiz_id=None):
         flash(f'Error generating PDF: {str(e)}', 'error')
         return redirect(url_for('preview_quiz', quiz_id=quiz_id))
 
+# Save quiz edits route
+@app.route('/save-edits', methods=['POST'])
+def save_quiz_edits():
+    quiz_id = request.args.get('quiz_id', None)
+    quiz_title = request.form.get('quiz_title', 'Untitled Quiz')
+    
+    try:
+        # Collect all form data to reconstruct the quiz
+        new_quiz_data = []
+        
+        # Determine how many questions we're dealing with
+        question_count = 0
+        for key in request.form.keys():
+            if key.startswith('question_'):
+                question_index = int(key.split('_')[1])
+                question_count = max(question_count, question_index + 1)
+        
+        # Process each question
+        for i in range(question_count):
+            question_text = request.form.get(f'question_{i}', '')
+            answer_text = request.form.get(f'answer_{i}', '')
+            explanation_text = request.form.get(f'explanation_{i}', '')
+            question_type = request.form.get(f'question_type_{i}', '')
+            
+            # Skip empty questions
+            if not question_text:
+                continue
+                
+            question_data = {
+                'question': question_text,
+                'answer': answer_text
+            }
+            
+            # Add question type if available
+            if question_type:
+                question_data['question_type'] = question_type
+                
+            # Add explanation if available
+            if explanation_text:
+                question_data['explanation'] = explanation_text
+                
+            # Check for options (multiple choice questions)
+            options = []
+            option_index = 0
+            while True:
+                option_key = f'option_{i}_{option_index}'
+                if option_key in request.form:
+                    option_text = request.form.get(option_key, '')
+                    if option_text:
+                        options.append(option_text)
+                    option_index += 1
+                else:
+                    break
+                    
+            if options:
+                question_data['options'] = options
+                
+            new_quiz_data.append(question_data)
+            
+        # Update quiz in database or session
+        if quiz_id and quiz_id.isdigit():
+            quiz_id = int(quiz_id)
+            # Update existing quiz in database
+            if current_user.is_authenticated:
+                quiz = Quiz.query.get_or_404(quiz_id)
+                
+                # Check if the quiz belongs to the current user
+                if quiz.user_id != current_user.id:
+                    flash('You do not have permission to edit this quiz.', 'error')
+                    return redirect(url_for('dashboard'))
+                
+                quiz.title = quiz_title
+                quiz.content = json.dumps(new_quiz_data)
+                quiz.question_count = len(new_quiz_data)
+                db.session.commit()
+                flash('Quiz updated successfully!', 'success')
+            else:
+                flash('You need to be logged in to edit saved quizzes.', 'error')
+                return redirect(url_for('login'))
+        else:
+            # Update quiz in session for guest users
+            session['quiz_data'] = new_quiz_data
+            session['quiz_title'] = quiz_title
+            flash('Quiz updated successfully!', 'success')
+            
+        return redirect(url_for('preview_quiz', quiz_id=quiz_id if quiz_id and quiz_id.isdigit() else None))
+        
+    except Exception as e:
+        flash(f'Error saving quiz: {str(e)}', 'error')
+        return redirect(url_for('preview_quiz', quiz_id=quiz_id if quiz_id and quiz_id.isdigit() else None))
+
 # Delete quiz
 @app.route('/delete/<int:quiz_id>', methods=['POST'])
 @login_required

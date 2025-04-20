@@ -6,17 +6,32 @@
 <div class="bg-white rounded-xl shadow-lg p-8">
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
         <div>
-            <h1 class="text-3xl font-bold text-gray-800">{{ quiz_title }}</h1>
+            <input type="text" value="{{ quiz_title }}" id="quiz_title" class="text-3xl font-bold text-gray-800 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-indigo-500 focus:outline-none focus:ring-0 w-full" />
             <p class="text-gray-600 mt-1">{{ quiz_type }} Quiz - {{ quiz_data|length }} questions</p>
         </div>
         
         <div class="mt-4 md:mt-0 flex flex-wrap gap-3">
+            <!-- Edit Mode Toggle Button -->
+            <button id="toggle-edit-mode" class="py-2 px-4 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white font-medium text-sm transition">
+                <i class="fas fa-edit mr-1"></i> <span id="edit-mode-text">Enable Edit Mode</span>
+            </button>
+            
+            <!-- Save Changes & Reset Buttons (Initially Hidden) -->
+            <div id="edit-controls" class="hidden">
+                <button id="save-changes" class="py-2 px-4 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium text-sm transition mr-2">
+                    <i class="fas fa-save mr-1"></i> Save Changes
+                </button>
+                <button id="reset-changes" class="py-2 px-4 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium text-sm transition">
+                    <i class="fas fa-undo mr-1"></i> Reset to Original
+                </button>
+            </div>
+            
             {% if quiz_id is not none %}
-                <a href="{{ url_for('download_quiz', quiz_id=quiz_id) }}" class="py-2 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm transition">
+                <a href="{{ url_for('download_quiz', quiz_id=quiz_id) }}" class="py-2 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm transition" id="download-pdf-btn">
                     <i class="fas fa-download mr-1"></i> Download PDF
                 </a>
             {% else %}
-                <a href="{{ url_for('download_quiz') }}" class="py-2 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm transition">
+                <a href="{{ url_for('download_quiz') }}" class="py-2 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm transition" id="download-pdf-btn">
                     <i class="fas fa-download mr-1"></i> Download PDF
                 </a>
             {% endif %}
@@ -34,50 +49,86 @@
     </div>
     
     <div class="border-t border-gray-200 pt-6">
-        <div class="space-y-6">
-            {% for question in quiz_data %}
-                <div class="bg-gray-50 rounded-lg p-6 shadow-sm hover:shadow-md transition">
-                    <div class="flex">
-                        <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-800 font-bold mr-3 flex-shrink-0">
-                            {{ loop.index }}
-                        </div>
-                        <div class="flex-1">
-                            {% if 'question_type' in question %}
-                                <p class="text-xs text-indigo-600 font-medium mb-1">{{ question.question_type }}</p>
-                            {% endif %}
-                            
-                            <h3 class="text-lg font-semibold text-gray-800 mb-3">{{ question.question }}</h3>
-                            
-                            {% if 'options' in question %}
-                                <div class="ml-5 space-y-2 mt-4">
-                                    {% for option in question.options %}
-                                        <div class="flex items-start">
-                                            <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-200 text-gray-700 font-medium text-sm mr-2">
-                                                {{ ['A', 'B', 'C', 'D', 'E', 'F'][loop.index0] }}
-                                            </span>
-                                            <span class="text-gray-800">{{ option }}</span>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                            
-                            <div class="mt-4 pt-3 border-t border-gray-200">
-                                <div class="flex items-center">
-                                    <span class="font-semibold text-gray-700 mr-2">Answer:</span>
-                                    <span class="text-green-600 font-medium">{{ question.answer }}</span>
-                                </div>
+        <form id="edit-quiz-form" method="POST" action="{{ url_for('save_quiz_edits', quiz_id=quiz_id) if quiz_id else url_for('save_quiz_edits') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="quiz_title" id="form-quiz-title" value="{{ quiz_title }}">
+            
+            <div class="space-y-6">
+                {% for question in quiz_data %}
+                    <div class="bg-gray-50 rounded-lg p-6 shadow-sm hover:shadow-md transition question-container" data-index="{{ loop.index0 }}">
+                        <div class="flex">
+                            <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-800 font-bold mr-3 flex-shrink-0">
+                                {{ loop.index }}
+                            </div>
+                            <div class="flex-1">
+                                {% if 'question_type' in question %}
+                                    <p class="text-xs text-indigo-600 font-medium mb-1">
+                                        <select class="question-type editable-field bg-transparent border-b border-transparent hover:border-gray-300 focus:border-indigo-500 focus:outline-none focus:ring-0 p-1 disabled:opacity-100 disabled:appearance-none disabled:cursor-default" disabled name="question_type_{{ loop.index0 }}">
+                                            <option value="{{ question.question_type }}" selected>{{ question.question_type }}</option>
+                                            <option value="Multiple Choice">Multiple Choice</option>
+                                            <option value="True/False">True/False</option>
+                                            <option value="Fill in the Blanks">Fill in the Blanks</option>
+                                            <option value="Short Answer">Short Answer</option>
+                                        </select>
+                                    </p>
+                                {% endif %}
                                 
-                                {% if 'explanation' in question %}
-                                    <div class="mt-2 text-sm text-gray-600">
-                                        <span class="font-semibold">Explanation:</span> {{ question.explanation }}
+                                <textarea 
+                                    class="question-text editable-field text-lg font-semibold text-gray-800 mb-3 w-full p-2 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-indigo-500 focus:outline-none focus:ring-0 resize-none overflow-hidden disabled:resize-none disabled:border-none" 
+                                    disabled 
+                                    name="question_{{ loop.index0 }}"
+                                    rows="2"
+                                >{{ question.question }}</textarea>
+                                
+                                {% if 'options' in question %}
+                                    <div class="ml-5 space-y-2 mt-4 options-container">
+                                        {% for option in question.options %}
+                                            <div class="flex items-start option-row">
+                                                <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-200 text-gray-700 font-medium text-sm mr-2 flex-shrink-0">
+                                                    {{ ['A', 'B', 'C', 'D', 'E', 'F'][loop.index0] }}
+                                                </span>
+                                                <input 
+                                                    type="text" 
+                                                    value="{{ option }}" 
+                                                    class="option-text editable-field text-gray-800 w-full p-1 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-indigo-500 focus:outline-none focus:ring-0 disabled:border-none" 
+                                                    disabled 
+                                                    name="option_{{ loop.parent.loop.index0 }}_{{ loop.index0 }}"
+                                                />
+                                            </div>
+                                        {% endfor %}
                                     </div>
                                 {% endif %}
+                                
+                                <div class="mt-4 pt-3 border-t border-gray-200">
+                                    <div class="flex items-start">
+                                        <span class="font-semibold text-gray-700 mr-2 mt-2">Answer:</span>
+                                        <input 
+                                            type="text" 
+                                            value="{{ question.answer }}" 
+                                            class="answer-text editable-field text-green-600 font-medium w-full p-1 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-indigo-500 focus:outline-none focus:ring-0 disabled:border-none" 
+                                            disabled 
+                                            name="answer_{{ loop.index0 }}"
+                                        />
+                                    </div>
+                                    
+                                    {% if 'explanation' in question %}
+                                        <div class="mt-2 text-sm text-gray-600">
+                                            <span class="font-semibold align-top">Explanation:</span>
+                                            <textarea 
+                                                class="explanation-text editable-field w-full p-1 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-indigo-500 focus:outline-none focus:ring-0 resize-none overflow-hidden disabled:resize-none disabled:border-none" 
+                                                disabled 
+                                                name="explanation_{{ loop.index0 }}"
+                                                rows="2"
+                                            >{{ question.explanation }}</textarea>
+                                        </div>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            {% endfor %}
-        </div>
+                {% endfor %}
+            </div>
+        </form>
     </div>
     
     <div class="mt-8 text-center">
@@ -86,4 +137,169 @@
         </a>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Store original quiz data for reset functionality
+        const originalQuizData = {
+            title: "{{ quiz_title }}",
+            questions: []
+        };
+        
+        // Collect all question data
+        document.querySelectorAll('.question-container').forEach(questionDiv => {
+            const index = questionDiv.dataset.index;
+            const questionObj = {
+                question: questionDiv.querySelector('.question-text').value,
+                answer: questionDiv.querySelector('.answer-text').value
+            };
+            
+            // Add options if present
+            const optionsContainer = questionDiv.querySelector('.options-container');
+            if (optionsContainer) {
+                questionObj.options = [];
+                optionsContainer.querySelectorAll('.option-text').forEach(optionInput => {
+                    questionObj.options.push(optionInput.value);
+                });
+            }
+            
+            // Add explanation if present
+            const explanationText = questionDiv.querySelector('.explanation-text');
+            if (explanationText) {
+                questionObj.explanation = explanationText.value;
+            }
+            
+            // Add question type if present
+            const questionTypeSelect = questionDiv.querySelector('.question-type');
+            if (questionTypeSelect) {
+                questionObj.question_type = questionTypeSelect.value;
+            }
+            
+            originalQuizData.questions.push(questionObj);
+        });
+        
+        // Toggle edit mode
+        const toggleEditModeBtn = document.getElementById('toggle-edit-mode');
+        const editModeText = document.getElementById('edit-mode-text');
+        const editControls = document.getElementById('edit-controls');
+        const editableFields = document.querySelectorAll('.editable-field');
+        const quizTitleInput = document.getElementById('quiz_title');
+        const formQuizTitleInput = document.getElementById('form-quiz-title');
+        
+        toggleEditModeBtn.addEventListener('click', function() {
+            const isEditMode = toggleEditModeBtn.classList.contains('bg-green-500');
+            
+            if (isEditMode) {
+                // Switch to view mode
+                toggleEditModeBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                toggleEditModeBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
+                editModeText.textContent = 'Enable Edit Mode';
+                editControls.classList.add('hidden');
+                
+                // Disable all editable fields
+                editableFields.forEach(field => {
+                    field.disabled = true;
+                });
+                quizTitleInput.disabled = true;
+            } else {
+                // Switch to edit mode
+                toggleEditModeBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+                toggleEditModeBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                editModeText.textContent = 'Editing Enabled';
+                editControls.classList.remove('hidden');
+                
+                // Enable all editable fields
+                editableFields.forEach(field => {
+                    field.disabled = false;
+                });
+                quizTitleInput.disabled = false;
+            }
+        });
+        
+        // Auto-resize textareas as content changes
+        const autoResizeTextareas = () => {
+            document.querySelectorAll('textarea.editable-field').forEach(textarea => {
+                textarea.style.height = 'auto';
+                textarea.style.height = (textarea.scrollHeight) + 'px';
+                
+                textarea.addEventListener('input', function() {
+                    this.style.height = 'auto';
+                    this.style.height = (this.scrollHeight) + 'px';
+                });
+            });
+        };
+        
+        autoResizeTextareas();
+        
+        // Save Changes button
+        const saveChangesBtn = document.getElementById('save-changes');
+        saveChangesBtn.addEventListener('click', function() {
+            // Update the form title field with the current input value
+            formQuizTitleInput.value = quizTitleInput.value;
+            
+            // Submit the form to save changes
+            document.getElementById('edit-quiz-form').submit();
+        });
+        
+        // Reset to Original button
+        const resetChangesBtn = document.getElementById('reset-changes');
+        resetChangesBtn.addEventListener('click', function() {
+            // Reset the quiz title
+            quizTitleInput.value = originalQuizData.title;
+            
+            // Reset all questions
+            document.querySelectorAll('.question-container').forEach((questionDiv, index) => {
+                const originalQuestion = originalQuizData.questions[index];
+                
+                // Reset question text
+                questionDiv.querySelector('.question-text').value = originalQuestion.question;
+                
+                // Reset answer
+                questionDiv.querySelector('.answer-text').value = originalQuestion.answer;
+                
+                // Reset options if present
+                const optionsContainer = questionDiv.querySelector('.options-container');
+                if (optionsContainer && originalQuestion.options) {
+                    optionsContainer.querySelectorAll('.option-text').forEach((optionInput, optIndex) => {
+                        if (originalQuestion.options[optIndex]) {
+                            optionInput.value = originalQuestion.options[optIndex];
+                        }
+                    });
+                }
+                
+                // Reset explanation if present
+                const explanationText = questionDiv.querySelector('.explanation-text');
+                if (explanationText && originalQuestion.explanation) {
+                    explanationText.value = originalQuestion.explanation;
+                }
+                
+                // Reset question type if present
+                const questionTypeSelect = questionDiv.querySelector('.question-type');
+                if (questionTypeSelect && originalQuestion.question_type) {
+                    questionTypeSelect.value = originalQuestion.question_type;
+                }
+            });
+            
+            // Resize textareas after reset
+            autoResizeTextareas();
+            
+            // Show confirmation message
+            alert('Quiz has been reset to its original state.');
+        });
+        
+        // Update quiz title in the form when it changes
+        quizTitleInput.addEventListener('input', function() {
+            formQuizTitleInput.value = this.value;
+        });
+        
+        // Prevent form submission when pressing Enter in input fields
+        document.querySelectorAll('input, textarea').forEach(input => {
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}
