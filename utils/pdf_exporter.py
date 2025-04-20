@@ -60,7 +60,7 @@ def create_quiz_pdf(quiz_data, quiz_title):
             fontName='Helvetica-Oblique',
             fontSize=10,
             leftIndent=20,
-            textColor=colors.dark_blue,
+            textColor=colors.blue,
             spaceAfter=16
         )
         
