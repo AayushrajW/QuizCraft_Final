@@ -1,0 +1,240 @@
+I want to build a Flask-based Python mini project called QuizCraft — an AI-powered quiz generator that runs locally in VS Code only, and is designed for desktop browser use only (no mobile responsiveness required).
+This must be a complete rebuild from scratch — with a modern, professional UI and fully working features.
+
+⚠️ Python Version Requirement
+✅ Use Python 3.10.11 — it is the most stable and compatible with:
+
+Flask and its extensions
+
+pytesseract, reportlab, PyPDF2
+
+google-generativeai
+
+❌ Do not use 3.11+ as it may cause compatibility issues
+
+🔥 PRIMARY GOALS
+Full local-only hosting via VS Code
+
+Modern, bright, desktop-only layout
+
+Real-time quiz generation using Gemini API
+
+OCR support with Tesseract
+
+Secure authentication system
+
+Beautiful UI using Tailwind CSS
+
+No missing modules, no server-side errors (500/505)
+
+🧠 CORE FEATURES
+✅ Homepage (index.html)
+Split layout:
+
+Left: Gradient or image background with branding and tagline
+
+Right: Call to action
+
+Sign In / Register buttons
+
+Guest mode button (“Continue without login”)
+
+“How It Works” section (3 feature cards)
+
+“Get Started” → goes to quiz generator
+
+✅ Quiz Generator Page (generate_quiz.html)
+Input Options (cards or tabbed):
+
+Paste Text
+
+Upload File (PDF, DOCX, TXT, CSV)
+
+Upload Image (uses OCR)
+
+Input for number of questions (5–75)
+
+Quiz Type Selection via interactive cards (NOT dropdown)
+
+Cards for:
+
+Multiple Choice
+
+True/False
+
+Fill in the Blanks
+
+Short Answer
+
+Mixed Type
+
+Each card includes:
+
+Icon (color-coded)
+
+Title + subtitle
+
+Hover + selected state with border-indigo-500
+
+✅ Real-Time Progress Feedback
+When the user clicks Generate Quiz:
+
+Show a progress bar or spinner while waiting for AI
+
+Use Tailwind animation classes (animate-pulse, w-3/4, etc.)
+
+Hide once results are shown
+
+html
+Copy
+Edit
+<div class="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+  <div class="bg-indigo-600 h-2.5 rounded-full animate-pulse w-3/4"></div>
+</div>
+<p class="text-sm text-gray-500 text-center italic">Generating your quiz, please wait...</p>
+✅ Quiz Preview Page (preview_quiz.html)
+Clean card layout for displaying generated quiz
+
+Options:
+
+Download as PDF
+
+Edit quiz (optional)
+
+Regenerate
+
+✅ PDF Generation
+PDF output must:
+
+Display questions and answers on separate pages
+
+Handle special characters (quotes, dashes, etc.)
+
+Use reportlab or PyPDF2
+
+Be wrapped in a try-except to prevent crashes
+
+✅ Login / Register Pages (login.html, register.html)
+Fix these previously reported issues:
+
+❌ User unable to login or register (500/505 errors)
+
+❌ Password show/hide toggle not working
+
+✅ Implement:
+
+Password hashing using werkzeug.security
+
+Session handling via Flask-Login
+
+Flash messages for feedback
+
+Toggle JS:
+
+js
+Copy
+Edit
+togglePassword.addEventListener("click", () => {
+  const type = password.type === "password" ? "text" : "password";
+  password.type = type;
+});
+✅ Dashboard Page (dashboard.html)
+Show quiz history:
+
+File name, quiz type, timestamp
+
+Buttons: Download, Retake, Delete
+
+Add profile section (optional)
+
+🎨 UI DESIGN (Tailwind CSS)
+Use Tailwind CSS for all styling
+
+Visual requirements:
+
+Card-based layout
+
+Rounded borders, drop shadows
+
+Indigo/violet/blue-gray theme
+
+Transitions on hover, active states
+
+Large readable typography (text-lg, font-semibold)
+
+Focus ONLY on desktop UX — no mobile responsiveness required
+
+🗂️ PROJECT STRUCTURE
+bash
+Copy
+Edit
+/main.py
+/app.py
+/templates/
+  base.html
+  index.html
+  login.html
+  register.html
+  generate_quiz.html
+  preview_quiz.html
+  dashboard.html
+  quiz_history.html
+/static/
+  /css/style.css
+  /images/logo.png
+  /js/main.js (password toggle)
+/utils/
+  quiz_generator.py
+  ocr_reader.py
+  pdf_exporter.py
+/database/
+  models.py
+  db_init.py
+/requirements.txt
+.env.example
+README.md
+⚙️ VS CODE SETUP ONLY
+Local setup instructions:
+
+bash
+Copy
+Edit
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+python main.py
+⚠️ Do NOT configure this for Replit cloud or online deployment.
+This is a local-only desktop project.
+
+📦 requirements.txt
+txt
+Copy
+Edit
+flask
+flask_sqlalchemy
+flask_login
+flask_wtf
+python-dotenv
+google-generativeai
+pytesseract
+reportlab
+PyPDF2
+python-docx
+email-validator
+werkzeug
+✅ RECAP CHECKLIST (Everything Covered)
+
+✅ Feature	Status
+Gemini AI Quiz Generation	✅
+Custom Quiz Count (5–75)	✅
+Input types (text, file, image)	✅
+OCR via Tesseract	✅
+Interactive Quiz Type Cards	✅
+Progress Bar During Generation	✅
+Working Login / Register	✅
+Password View/Hide Toggle (Fixed)	✅
+Flash Messages	✅
+Preview + PDF Export	✅
+Beautiful Tailwind UI	✅
+Desktop-Only UX	✅
+VS Code Local Setup (Python 3.10.11)	✅
