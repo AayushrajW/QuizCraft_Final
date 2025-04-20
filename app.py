@@ -3,6 +3,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 from flask_login import LoginManager
+from flask_wtf.csrf import CSRFProtect
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 class Base(DeclarativeBase):
@@ -10,6 +11,9 @@ class Base(DeclarativeBase):
 
 # Initialize SQLAlchemy
 db = SQLAlchemy(model_class=Base)
+
+# Initialize CSRF protection
+csrf = CSRFProtect()
 
 # Create the app
 app = Flask(__name__)
@@ -24,8 +28,9 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 }
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-# Initialize SQLAlchemy with the app
+# Initialize extensions with the app
 db.init_app(app)
+csrf.init_app(app)
 
 # Initialize login manager
 login_manager = LoginManager()
