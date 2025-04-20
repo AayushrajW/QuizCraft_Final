@@ -297,16 +297,15 @@ def save_quiz_edits():
                 
             # Check for options (multiple choice questions)
             options = []
-            option_index = 0
-            while True:
-                option_key = f'option_{i}_{option_index}'
-                if option_key in request.form:
-                    option_text = request.form.get(option_key, '')
-                    if option_text:
-                        options.append(option_text)
-                    option_index += 1
-                else:
-                    break
+            
+            # Collect all option keys for this question
+            option_keys = [key for key in request.form.keys() if key.startswith(f'option_{i}_')]
+            
+            # Extract the option values
+            for key in sorted(option_keys, key=lambda k: int(k.split('_')[-1]) if k.split('_')[-1].isdigit() else 0):
+                option_text = request.form.get(key, '')
+                if option_text:
+                    options.append(option_text)
                     
             if options:
                 question_data['options'] = options
@@ -314,11 +313,11 @@ def save_quiz_edits():
             new_quiz_data.append(question_data)
             
         # Update quiz in database or session
-        if quiz_id and quiz_id.isdigit():
-            quiz_id = int(quiz_id)
+        if quiz_id is not None and str(quiz_id).isdigit():
+            quiz_id_int = int(quiz_id)
             # Update existing quiz in database
             if current_user.is_authenticated:
-                quiz = Quiz.query.get_or_404(quiz_id)
+                quiz = Quiz.query.get_or_404(quiz_id_int)
                 
                 # Check if the quiz belongs to the current user
                 if quiz.user_id != current_user.id:
@@ -333,13 +332,15 @@ def save_quiz_edits():
             else:
                 flash('You need to be logged in to edit saved quizzes.', 'error')
                 return redirect(url_for('login'))
+            
+            return redirect(url_for('preview_quiz', quiz_id=quiz_id_int))
         else:
             # Update quiz in session for guest users
             session['quiz_data'] = new_quiz_data
             session['quiz_title'] = quiz_title
             flash('Quiz updated successfully!', 'success')
             
-        return redirect(url_for('preview_quiz', quiz_id=quiz_id if quiz_id and quiz_id.isdigit() else None))
+            return redirect(url_for('preview_quiz'))
         
     except Exception as e:
         flash(f'Error saving quiz: {str(e)}', 'error')

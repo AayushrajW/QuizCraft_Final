@@ -49,7 +49,7 @@
     </div>
     
     <div class="border-t border-gray-200 pt-6">
-        <form id="edit-quiz-form" method="POST" action="{{ url_for('save_quiz_edits', quiz_id=quiz_id) if quiz_id else url_for('save_quiz_edits') }}">
+        <form id="edit-quiz-form" method="POST" action="{{ url_for('save_quiz_edits', quiz_id=quiz_id) if quiz_id is not none else url_for('save_quiz_edits') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="quiz_title" id="form-quiz-title" value="{{ quiz_title }}">
             
