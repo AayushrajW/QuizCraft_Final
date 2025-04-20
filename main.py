@@ -30,17 +30,22 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        email = request.form.get('email')
+        username_or_email = request.form.get('username_or_email')
         password = request.form.get('password')
         
-        user = User.query.filter_by(email=email).first()
+        # Try to find user by email first
+        user = User.query.filter_by(email=username_or_email).first()
+        
+        # If not found, try by username
+        if not user:
+            user = User.query.filter_by(username=username_or_email).first()
         
         if user and check_password_hash(user.password_hash, password):
             login_user(user)
             flash('Login successful!', 'success')
             return redirect(url_for('dashboard'))
         else:
-            flash('Invalid email or password.', 'error')
+            flash('Invalid username/email or password.', 'error')
             
     return render_template('login.html')
 
