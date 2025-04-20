@@ -145,8 +145,8 @@ def generate_quiz_with_gemini(content, quiz_type, question_count):
         """
     
     try:
-        # Initialize the Gemini model
-        model = genai.GenerativeModel('gemini-1.0-pro')
+        # Initialize the Gemini model - using the latest available model
+        model = genai.GenerativeModel('gemini-pro')
         
         # Generate response
         response = model.generate_content(prompt)
