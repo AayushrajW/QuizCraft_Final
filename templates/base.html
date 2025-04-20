@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}QuizCraft - AI-Powered Quiz Generator{% endblock %}</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f5f3ff',
+                            100: '#ede9fe',
+                            200: '#ddd6fe',
+                            300: '#c4b5fd',
+                            400: '#a78bfa',
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                            700: '#6d28d9',
+                            800: '#5b21b6',
+                            900: '#4c1d95',
+                        },
+                    }
+                }
+            }
+        }
+    </script>
+    
+    {% block head %}{% endblock %}
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <a href="{{ url_for('index') }}" class="text-primary-600 font-bold text-xl">
+                            <i class="fas fa-brain mr-2"></i>QuizCraft
+                        </a>
+                    </div>
+                    <div class="hidden sm:ml-6 sm:flex sm:items-center">
+                        <div class="flex space-x-4">
+                            <a href="{{ url_for('index') }}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-100 transition">Home</a>
+                            <a href="{{ url_for('generate') }}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-100 transition">Generate Quiz</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    {% if current_user.is_authenticated %}
+                        <a href="{{ url_for('dashboard') }}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-100 transition">Dashboard</a>
+                        <a href="{{ url_for('logout') }}" class="ml-4 px-4 py-2 rounded-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 transition">Logout</a>
+                    {% else %}
+                        <a href="{{ url_for('login') }}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-100 transition">Login</a>
+                        <a href="{{ url_for('register') }}" class="ml-4 px-4 py-2 rounded-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 transition">Register</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+                {% for category, message in messages %}
+                    {% if category == 'error' %}
+                        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                            <span class="block sm:inline">{{ message }}</span>
+                            <button class="absolute top-0 bottom-0 right-0 px-4 py-3 flash-close">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    {% elif category == 'success' %}
+                        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+                            <span class="block sm:inline">{{ message }}</span>
+                            <button class="absolute top-0 bottom-0 right-0 px-4 py-3 flash-close">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    {% else %}
+                        <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative mb-4" role="alert">
+                            <span class="block sm:inline">{{ message }}</span>
+                            <button class="absolute top-0 bottom-0 right-0 px-4 py-3 flash-close">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-6 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <p class="text-lg font-semibold">QuizCraft</p>
+                    <p class="text-sm text-gray-300">AI-Powered Quiz Generator</p>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="#" class="text-gray-300 hover:text-white transition">
+                        <i class="fab fa-github"></i>
+                    </a>
+                    <a href="#" class="text-gray-300 hover:text-white transition">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a href="#" class="text-gray-300 hover:text-white transition">
+                        <i class="fab fa-linkedin"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="mt-4 text-center text-sm text-gray-400">
+                <p>&copy; {{ current_year if current_year else '2023' }} QuizCraft. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Base JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    
+    <!-- Flash message close functionality -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const closeButtons = document.querySelectorAll('.flash-close');
+            closeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    this.parentElement.style.display = 'none';
+                });
+            });
+        });
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>
